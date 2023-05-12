@@ -15,7 +15,7 @@ def _found_region(cookies):
                 else:
                     raise ValueError(f'Unknown region {_region}')
         else:  # for
-            raise ValueError(f'JSESSIONID cookie not found')
+            raise ValueError('JSESSIONID cookie not found')
     except Exception:
         return 'eu'
 

@@ -78,11 +78,7 @@ class BackendClient(object):
                 logging.debug(f'Request to {url} responsed with status code {response.status_code}')
                 self.handle_status_code(response.status_code)
 
-            if json:
-                return response.json()
-            else:
-                return response
-
+            return response.json() if json else response
         except Exception as e:
             raise e
 

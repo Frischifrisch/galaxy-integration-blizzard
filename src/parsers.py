@@ -33,10 +33,7 @@ class ConfigParser(object):
 
             if 'Services' in content[key]:
                 self._region = content[key]['Services']['LastLoginRegion']
-        if 'Games' in content:
-            return content['Games']
-        else:
-            return {}
+        return content['Games'] if 'Games' in content else {}
 
     def decode(self, games_dict):
         games = []

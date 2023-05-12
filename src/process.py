@@ -12,9 +12,7 @@ class ProcessProvider(object):
         for p in psutil.process_iter(attrs=['exe'], ad_value=''):
             if p.info['exe'] == path:
                 try:
-                    if p.parent() and p.parent().exe() == path:
-                        return p.parent()
-                    return p
+                    return p.parent() if p.parent() and p.parent().exe() == path else p
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
 

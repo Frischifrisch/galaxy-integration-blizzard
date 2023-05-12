@@ -14,12 +14,7 @@ if __name__ == "__main__":
             path.touch()
 
         with open("credentials.data", "r") as f:
-            data = f.read()
-            if data:
-                credentials = json.loads(data)
-            else:
-                credentials = None
-
+            credentials = json.loads(data) if (data := f.read()) else None
         credentials_rpc = json.dumps(
             {
                 "jsonrpc": "2.0",

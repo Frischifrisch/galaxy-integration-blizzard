@@ -52,7 +52,7 @@ class WinLocalClient(BaseLocalClient):
                 uninstaller_path = pathlib.Path(AGENT_PATH) / 'Blizzard Uninstaller.exe'
                 return WinUninstaller(uninstaller_path)
         except FileNotFoundError as e:
-            log.warning('uninstaller not found' + str(e))
+            log.warning(f'uninstaller not found{str(e)}')
 
     def _find_exe(self):
         shell_reg_value = self.__search_registry_for_run_cmd(*self._WIN_REG_SHELL)
@@ -82,9 +82,7 @@ class WinLocalClient(BaseLocalClient):
             return False
         if ctypes.windll.user32.IsWindowVisible(bnet_handle):
             ctypes.windll.user32.CloseWindow(bnet_handle)
-            if ctypes.windll.user32.IsWindowVisible(bnet_handle):
-                return False
-            return True
+            return not ctypes.windll.user32.IsWindowVisible(bnet_handle)
         return False
 
     async def prevent_battlenet_from_showing(self):
@@ -111,7 +109,7 @@ class WinLocalClient(BaseLocalClient):
             with self._process.oneshot():
                 for proc in self._process.children():
                     if proc.exe() in game.execs:
-                        log.debug(f'Process has been found')
+                        log.debug('Process has been found')
                         return True
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
@@ -152,7 +150,7 @@ class MacLocalClient(BaseLocalClient):
         windows = CGWindowListCopyWindowInfo(kCGWindowListExcludeDesktopElements, kCGNullWindowID)
         for window in windows:
             try:
-                if 'Blizzard Battle.net' == window['kCGWindowName']:
+                if window['kCGWindowName'] == 'Blizzard Battle.net':
                     log.debug('Main Battle.net window was found')
                     return True
             except KeyError:
@@ -192,10 +190,10 @@ class MacLocalClient(BaseLocalClient):
 
     def _check_for_game_process(self, game):
         """Check over all processes because on macOS games are spawn not as client children"""
-        for proc in psutil.process_iter(attrs=['exe'], ad_value=''):
-            if proc.info['exe'] in game.execs:
-                return True
-        return False
+        return any(
+            proc.info['exe'] in game.execs
+            for proc in psutil.process_iter(attrs=['exe'], ad_value='')
+        )
 
 
 if SYSTEM == Platform.WINDOWS:

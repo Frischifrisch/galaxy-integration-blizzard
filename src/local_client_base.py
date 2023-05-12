@@ -78,9 +78,8 @@ class BaseLocalClient(abc.ABC):
     def is_running(self):
         if self._process and self._process.is_running():
             return True
-        else:
-            self._process = self._process_provider.get_process_by_path(self._exe)
-            return bool(self._process)
+        self._process = self._process_provider.get_process_by_path(self._exe)
+        return bool(self._process)
 
     async def _prepare_to_launch(self, uid, timeout):
         """launches the client and waits till proper renderer is opened
@@ -96,7 +95,7 @@ class BaseLocalClient(abc.ABC):
                 log.debug('Preparing to launch ended {:.2f}s before timeout'.format(timeout - time()))
                 return
             await asyncio.sleep(0.2)
-        raise TimeoutError(f'Timeout reached when waiting for gameview from Battle.net')
+        raise TimeoutError('Timeout reached when waiting for gameview from Battle.net')
 
     def install_game(self, uid: str):
         if not self.is_installed:
@@ -111,10 +110,7 @@ class BaseLocalClient(abc.ABC):
     def open_battlenet(self, uid: str=None):
         if not self.is_installed or not self._exe:
             raise ClientNotInstalledError()
-        if uid is not None:
-            args = (self._exe, f"--game={uid}")
-        else:
-            args = (self._exe)
+        args = (self._exe, f"--game={uid}") if uid is not None else self._exe
         subprocess.Popen(args, cwd=os.path.dirname(self._exe))
 
     async def wait_until_game_stops(self, game: InstalledGame):
@@ -146,7 +142,7 @@ class BaseLocalClient(abc.ABC):
             await self._prepare_to_launch(game.info.uid, timeout)
             cmd = f'"{self._exe}" --exec="launch {game.info.family}"'
             subprocess.Popen(cmd, cwd=os.path.dirname(self._exe), shell=True)
-        log.info(f"Launch game and start waiting for game process")
+        log.info("Launch game and start waiting for game process")
         while time() < timeout:
             if self._check_for_game_process(game):
                 return
@@ -161,20 +157,17 @@ class BaseLocalClient(abc.ABC):
             log.warning(f"product.db not found: {repr(e)}")
             return False
         except WindowsError as e:
-            # 5 WindowsError access denied
-            if e.winerror == 5:
-                log.warning(f"product.db not accessible: {repr(e)}")
-                self.config_parser = ConfigParser(None)
-                return False
-            else:
+            if e.winerror != 5:
                 raise ()
+            log.warning(f"product.db not accessible: {repr(e)}")
+            self.config_parser = ConfigParser(None)
+            return False
         except OSError as e:
-            if e.errno == errno.EACCES:
-                log.warning(f"product.db not accessible: {repr(e)}")
-                self.config_parser = ConfigParser(None)
-                return False
-            else:
+            if e.errno != errno.EACCES:
                 raise ()
+            log.warning(f"product.db not accessible: {repr(e)}")
+            self.config_parser = ConfigParser(None)
+            return False
         else:
             if self.is_installed != self.database_parser.battlenet_present:
                 self.refresh()
@@ -187,20 +180,17 @@ class BaseLocalClient(abc.ABC):
             self.config_parser = ConfigParser(None)
             return False
         except WindowsError as e:
-            # 5 WindowsError access denied
-            if e.winerror == 5:
-                log.warning(f"config file not accessible: {repr(e)}")
-                self.config_parser = ConfigParser(None)
-                return False
-            else:
+            if e.winerror != 5:
                 raise e
+            log.warning(f"config file not accessible: {repr(e)}")
+            self.config_parser = ConfigParser(None)
+            return False
         except OSError as e:
-            if e.errno == errno.EACCES:
-                log.warning(f"config file not accessible: {repr(e)}")
-                self.config_parser = ConfigParser(None)
-                return False
-            else:
+            if e.errno != errno.EACCES:
                 raise e
+            log.warning(f"config file not accessible: {repr(e)}")
+            self.config_parser = ConfigParser(None)
+            return False
         return True
 
     async def register_local_data_watcher(self):

@@ -221,21 +221,20 @@ class BNetPlugin(Plugin):
 
     async def authenticate(self, stored_credentials=None):
         try:
-            if stored_credentials:
-                auth_data = self.authentication_client.process_stored_credentials(stored_credentials)
-                try:
-                    await self.authentication_client.create_session()
-                    await self.backend_client.refresh_cookies()
-                    auth_status = await self.backend_client.validate_access_token(auth_data.access_token)
-                except (BackendNotAvailable, BackendError, NetworkError, UnknownError, BackendTimeout) as e:
-                    raise e
-                except Exception:
-                    raise InvalidCredentials()
-                if self.authentication_client.validate_auth_status(auth_status):
-                    self.authentication_client.user_details = await self.backend_client.get_user_info()
-                return self.authentication_client.parse_user_details()
-            else:
+            if not stored_credentials:
                 return self.authentication_client.authenticate_using_login()
+            auth_data = self.authentication_client.process_stored_credentials(stored_credentials)
+            try:
+                await self.authentication_client.create_session()
+                await self.backend_client.refresh_cookies()
+                auth_status = await self.backend_client.validate_access_token(auth_data.access_token)
+            except (BackendNotAvailable, BackendError, NetworkError, UnknownError, BackendTimeout) as e:
+                raise e
+            except Exception:
+                raise InvalidCredentials()
+            if self.authentication_client.validate_auth_status(auth_status):
+                self.authentication_client.user_details = await self.backend_client.get_user_info()
+            return self.authentication_client.parse_user_details()
         except Exception as e:
             raise e
 
@@ -260,7 +259,10 @@ class BNetPlugin(Plugin):
             raise InvalidCredentials()
 
         auth_status = await self.backend_client.validate_access_token(auth_data.access_token)
-        if not ("authorities" in auth_status and "IS_AUTHENTICATED_FULLY" in auth_status["authorities"]):
+        if (
+            "authorities" not in auth_status
+            or "IS_AUTHENTICATED_FULLY" not in auth_status["authorities"]
+        ):
             raise InvalidCredentials()
 
         self.authentication_client.user_details = await self.backend_client.get_user_info()
@@ -391,13 +393,11 @@ class BNetPlugin(Plugin):
         if qp_time is None:  # user has not played quick play
             return 0
         if qp_time.count(':') == 1:  # minutes and seconds
-            match = re.search('(?:(?P<m>\\d+):)(?P<s>\\d+)', qp_time)
-            if match:
-                return int(match.group('m'))
+            if match := re.search('(?:(?P<m>\\d+):)(?P<s>\\d+)', qp_time):
+                return int(match['m'])
         elif qp_time.count(':') == 2:  # hours, minutes and seconds
-            match = re.search('(?:(?P<h>\\d+):)(?P<m>\\d+)', qp_time)
-            if match:
-                return int(match.group('h')) * 60 + int(match.group('m'))
+            if match := re.search('(?:(?P<h>\\d+):)(?P<m>\\d+)', qp_time):
+                return int(match['h']) * 60 + int(match['m'])
         raise UnknownBackendResponse(f'Unknown Overwatch API playtime format: {qp_time}')
 
     async def _get_wow_achievements(self):
@@ -415,7 +415,7 @@ class BNetPlugin(Plugin):
             )
 
             for data in wow_character_data:
-                if isinstance(data, requests.Timeout) or isinstance(data, requests.ConnectionError):
+                if isinstance(data, (requests.Timeout, requests.ConnectionError)):
                     raise data
 
             wow_achievement_data = [

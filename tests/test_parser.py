@@ -17,7 +17,7 @@ def test_config_parser_decode_last_played():
     parser = ConfigParser(None)
     games = parser.decode({ "s2": { "LastPlayed": "1552039613" } })
     assert games[0].uid == "s2"
-    assert games[0].uninstall_tag == None
+    assert games[0].uninstall_tag is None
     assert games[0].last_played == '1552039613'
 
 

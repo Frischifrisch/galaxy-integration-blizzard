@@ -32,7 +32,7 @@ class FileWatcher(object):
                     raise ()
             except Exception as e:
                 log.exception(f'Stating {self.path} has failed: {str(e)}')
-                raise RuntimeError('Stating failed:' + str(e))
+                raise RuntimeError(f'Stating failed:{str(e)}')
             else:
                 if self.last_modification_time is None:
                     self.last_modification_time = stat.st_mtime

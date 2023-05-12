@@ -70,20 +70,25 @@ class AuthenticatedHttpClient(object):
     # use stored usertag/name if token validation fails, this is temporary solution, as we do not need that
     # endpoint for nothing else at this moment
     def validate_auth_status(self, auth_status):
-        if 'error' in auth_status:
-            if not self.user_details:
-                raise InvalidCredentials()
-            else:
-                return False
-        elif not self.user_details:
+        if (
+            'error' in auth_status
+            and not self.user_details
+            or 'error' not in auth_status
+            and not self.user_details
+        ):
             raise InvalidCredentials()
+        elif 'error' in auth_status:
+            return False
         else:
-            if not ("authorities" in auth_status and "IS_AUTHENTICATED_FULLY" in auth_status["authorities"]):
+            if (
+                "authorities" not in auth_status
+                or "IS_AUTHENTICATED_FULLY" not in auth_status["authorities"]
+            ):
                 raise InvalidCredentials()
             return True
 
     def parse_user_details(self):
-        if 'id' and 'battletag' in self.user_details:
+        if 'battletag' in self.user_details:
             return Authentication(self.user_details["id"], self.user_details["battletag"])
         else:
             raise InvalidCredentials()

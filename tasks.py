@@ -23,24 +23,28 @@ elif sys.platform == 'darwin':
 @task
 def build(c, output='build', ziparchive=None):
     if os.path.exists(output):
-        print('--> Removing {} directory'.format(output))
+        print(f'--> Removing {output} directory')
         rmtree(output)
 
     # Firstly dependencies needs to be "flatten" with pip-compile as pip requires --no-deps if --platform is used
     print('--> Flattening dependencies to temporary requirements file')
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
-        c.run(f'pip-compile requirements/app.txt --output-file=-', out_stream=tmp)
+        c.run('pip-compile requirements/app.txt --output-file=-', out_stream=tmp)
 
     # Then install all stuff with pip to output folder
     print('--> Installing with pip for specific version')
     args = [
-        'pip', 'install',
-        '-r', tmp.name,
-        '--python-version', '37',
-        '--platform', PIP_PLATFORM,
-        '--target "{}"'.format(output),
+        'pip',
+        'install',
+        '-r',
+        tmp.name,
+        '--python-version',
+        '37',
+        '--platform',
+        PIP_PLATFORM,
+        f'--target "{output}"',
         '--no-compile',
-        '--no-deps'
+        '--no-deps',
     ]
     c.run(" ".join(args), echo=True)
     os.unlink(tmp.name)
@@ -49,7 +53,7 @@ def build(c, output='build', ziparchive=None):
     copy_tree("src", output)
 
     if ziparchive is not None:
-        print('--> Compressing to {}'.format(ziparchive))
+        print(f'--> Compressing to {ziparchive}')
         zip_folder_to_file(output, ziparchive)
 
 
@@ -67,5 +71,5 @@ def install(c):
 @task
 def pack(c):
     output = "battlenet_" + MANIFEST['guid']
-    build(c, output=output, ziparchive='battlenet_v{}.zip'.format(MANIFEST['version']))
+    build(c, output=output, ziparchive=f"battlenet_v{MANIFEST['version']}.zip")
     rmtree(output)

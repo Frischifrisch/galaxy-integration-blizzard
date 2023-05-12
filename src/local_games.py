@@ -109,8 +109,7 @@ class LocalGames():
                 with winreg.OpenKey(reg, WINDOWS_UNINSTALL_LOCATION) as key:
                     for game in Blizzard.CLASSIC_GAMES:
                         log.debug(f"Checking if {game} is in registry ")
-                        installed_game = self._add_classic_game(game, key)
-                        if installed_game:
+                        if installed_game := self._add_classic_game(game, key):
                             classic_games[game.uid] = installed_game
             except OSError as e:
                 log.exception(f"Exception while looking for installed classic games {e}")
@@ -185,7 +184,9 @@ class LocalGames():
                     db_game.installed,
                 )
             except FileNotFoundError as e:
-                log.warning(str(e) + '. Probably outdated product.db after uninstall. Skipping')
+                log.warning(
+                    f'{str(e)}. Probably outdated product.db after uninstall. Skipping'
+                )
             return None
 
         games = {}

@@ -39,8 +39,9 @@ def s1_execs():
 @pytest.fixture()
 def mock_process_env(mocker):
     def function(procs):
-        mocker.patch('psutil.process_iter', return_value=[n for n in range(len(procs))])
+        mocker.patch('psutil.process_iter', return_value=list(range(len(procs))))
         mocker.patch('psutil.Process', autospec=True, side_effect=procs)
         mocker.patch.object(Process, 'username', 'mockuser')
+
     return function
 
